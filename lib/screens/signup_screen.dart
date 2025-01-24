@@ -118,12 +118,12 @@ class SignupScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _buildSocialButton(
-                          'assets/img.png',
+                          'assets/apple_icon.png',
                           onPressed: () {},
                         ),
                         const SizedBox(width: 16),
                         _buildSocialButton(
-                          'assets/img_1.png',
+                          'assets/google_icon.png',
                           onPressed: () {},
                         ),
                       ],

@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import '../controller/auth_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:skill/models/skills.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -15,6 +17,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool isEditing = false;
   List<Skill> availableSkills = [];
   List<Skill> userSkills = [];
+  File? _image;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -63,14 +67,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _pickImage() async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.camera);
+      if (pickedFile != null) {
+        setState(() {
+          _image = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      print("Error picking image: $e");
+    }
+  }
+
   Widget _buildModernHeader(Map<String, dynamic> userData) {
     return Container(
-      height: 280,
+      height: 300,
       child: Stack(
         children: [
           // Background gradient with curved bottom
           Container(
-            height: 240,
+            height: 300,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -93,7 +110,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 // Top bar
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -110,33 +127,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
 
                 // Profile picture
-                Container(
-                  margin: EdgeInsets.only(top: 16),
-                  width: 120,
-                  height: 45,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 4),
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 20,
-                        offset: Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      (userData['first_name'] as String?)?.isNotEmpty == true
-                          ? (userData['first_name'] as String)[0].toUpperCase()
-                          : '?',
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1976D2),
-                      ),
+                InkWell(
+                  onTap: _pickImage,
+                  child: Container(
+                    // margin: EdgeInsets.only(),
+                    width: 120,
+                    height: 90,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 4),
+                      color: Colors.white,
+                      image: _image != null
+                          ? DecorationImage(
+                        image: FileImage(_image!),
+                        fit: BoxFit.cover, // Ensures the image fits well
+                      )
+                          : null,
                     ),
+                    child: _image == null
+                        ? Center(
+                      child: Text(
+                        (userData['first_name'] as String?)?.isNotEmpty == true
+                            ? (userData['first_name'] as String)[0].toUpperCase()
+                            : '?',
+                        style: TextStyle(
+                          fontSize: 35,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1976D2),
+                        ),
+                      ),
+                    )
+                        : null,
                   ),
                 ),
 
