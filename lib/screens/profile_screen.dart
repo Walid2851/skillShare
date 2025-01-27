@@ -69,14 +69,74 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _pickImage() async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.camera);
+      // Show a dialog to choose between camera and gallery
+      final ImageSource? source = await showDialog<ImageSource>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Select Image Source"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.camera_alt),
+                title: Text("Camera"),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_library),
+                title: Text("Gallery"),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (source == null) return; // User canceled the selection
+
+      // Pick the image
+      final XFile? pickedFile = await _picker.pickImage(source: source);
       if (pickedFile != null) {
+        final File imageFile = File(pickedFile.path);
+
+        // Upload the image to Supabase storage
+        final String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final String filePath = 'profiles/$fileName'; // Path in the bucket
+
+        await _supabase.storage
+            .from('profiles') // Bucket name
+            .upload(filePath, imageFile);
+
+        // Get the public URL of the uploaded image
+        final String imageUrl = _supabase.storage
+            .from('profiles')
+            .getPublicUrl(filePath);
+
+        // Update the state with the new image
         setState(() {
-          _image = File(pickedFile.path);
+          _image = imageFile;
         });
+
+        // Save the image URL to the user's profile in the database
+        await _updateProfileImage(imageUrl);
       }
     } catch (e) {
-      print("Error picking image: $e");
+      print("Error picking or uploading image: $e");
+    }
+  }
+
+  Future<void> _updateProfileImage(String imageUrl) async {
+    try {
+      final String? userId = await _getCurrentUserId();
+      if (userId == null) return;
+
+      // Update the user's profile with the new image URL
+      await _supabase
+          .from('users')
+          .update({'profile_image_url': imageUrl})
+          .eq('id', userId);
+    } catch (e) {
+      print("Error updating profile image URL: $e");
     }
   }
 
@@ -97,10 +157,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Color(0xFF1976D2),
                 ],
               ),
-              // borderRadius: BorderRadius.only(
-              //   bottomLeft: Radius.circular(40),
-              //   bottomRight: Radius.circular(40),
-              // ),
             ),
           ),
 
@@ -126,39 +182,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
 
-                // Profile picture
-                InkWell(
-                  onTap: _pickImage,
-                  child: Container(
-                    // margin: EdgeInsets.only(),
-                    width: 120,
-                    height: 90,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 4),
-                      color: Colors.white,
-                      image: _image != null
-                          ? DecorationImage(
-                        image: FileImage(_image!),
-                        fit: BoxFit.cover, // Ensures the image fits well
-                      )
-                          : null,
+                // Profile picture and Edit Profile button
+                Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    InkWell(
+                      //onTap: _pickImage,
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 4),
+                          color: Colors.white,
+                          image: _image != null
+                              ? DecorationImage(
+                            image: FileImage(_image!),
+                            fit: BoxFit.cover,
+                          )
+                              : null,
+                        ),
+                        child: _image == null
+                            ? Center(
+                          child: Text(
+                            (userData['first_name'] as String?)?.isNotEmpty == true
+                                ? (userData['first_name'] as String)[0].toUpperCase()
+                                : '?',
+                            style: TextStyle(
+                              fontSize: 35,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1976D2),
+                            ),
+                          ),
+                        )
+                            : null,
+                      ),
                     ),
-                    child: _image == null
-                        ? Center(
-                      child: Text(
-                        (userData['first_name'] as String?)?.isNotEmpty == true
-                            ? (userData['first_name'] as String)[0].toUpperCase()
-                            : '?',
-                        style: TextStyle(
-                          fontSize: 35,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1976D2),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade600,
+                          shape: BoxShape.circle, // Circular shape for the container
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: IconButton(
+                          icon: Icon(Icons.camera_alt, color: Colors.white, size: 20), // Camera icon
+                          onPressed: _pickImage,
+                          padding: EdgeInsets.zero, // Remove extra padding
                         ),
                       ),
-                    )
-                        : null,
-                  ),
+                    ),
+                  ],
                 ),
 
                 // Name and username
