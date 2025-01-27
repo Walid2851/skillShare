@@ -283,6 +283,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
+  Future<String?> fetchSignedProfileUrl(String filePath, int expiresIn) async {
+    try {
+      // Replace 'profiles' with your bucket name if it's different
+      final signedUrl = await Supabase.instance.client.storage
+          .from('profiles')
+          .createSignedUrl(filePath, expiresIn);
+
+      if (signedUrl != null) {
+        print("Signed URL: $signedUrl");
+        return signedUrl;
+      } else {
+        print("Failed to fetch signed URL.");
+        return null;
+      }
+    } catch (e) {
+      print("Error fetching signed URL: $e");
+      return null;
+    }
+  }
+
+
   Widget _buildUserAvatar(Map<String, dynamic> user) {
     return Container(
       width: 100,
