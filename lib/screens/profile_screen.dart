@@ -438,54 +438,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-
-
+  // Future<String?> _getCurrentUserId() async {
+  //   try {
+  //     final firebaseUid = authController.user.value?.uid;
+  //     if (firebaseUid == null) return null;
+  //
+  //     final response = await _supabase
+  //         .from('users')
+  //         .select('id')
+  //         .eq('firebase_uid', firebaseUid)
+  //         .maybeSingle();  // Changed to maybeSingle to handle null cases
+  //
+  //     return response?['id']?.toString();
+  //   } catch (e) {
+  //     _showError('Failed to get user ID: ${e.toString()}');
+  //     return null;
+  //   }
+  // }
 
   void _showBioInputDialog() async {
-    // Show a dialog with a TextField
-    String? userInput = await showDialog<String>(
+    final String? userInput = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Enter Your Bio here...", style: TextStyle(fontSize: 20),),
+          title: const Text("Enter Your Bio", style: TextStyle(fontSize: 20)),
           content: TextField(
             controller: _textController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               hintText: "Write about yourself...",
             ),
+            maxLines: 3,
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(null); // Return null if canceled
-              },
-              child: Text("Cancel"),
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
             ),
             TextButton(
-              onPressed: () {
-                String input = _textController.text;
-                Navigator.of(context).pop(input); // Return the input
-              },
-              child: Text("Submit"),
+              onPressed: () => Navigator.pop(context, _textController.text),
+              child: const Text("Submit"),
             ),
           ],
         );
       },
     );
-    // Process the returned input
+
     if (userInput != null && userInput.isNotEmpty) {
-      _bioInput = userInput;
-      print(_bioInput);
-      // Example: Do something with the input (e.g., print it)
-      //print("Received input: $userInput");
-    } else {
-      //print("Input was canceled or empty");
+      try {
+        // 2. Added await for the Future<String?> return value
+        final currentUserId = await _getCurrentUserId();
+
+        if (currentUserId == null) {
+          throw Exception('User not authenticated or not found in database');
+        }
+
+        // 3. Removed .single() from update operation
+        final response = await Supabase.instance.client
+            .from('users')
+            .update({'bio': userInput.trim()})
+            .eq('id', currentUserId)
+            .maybeSingle();
+
+        // if (response.error != null) {
+        //   throw response.error!;
+        // }
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bio updated successfully!')),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
     }
 
-    // Clear the controller for the next input
     _textController.clear();
   }
-
 
   void _showSkillsEditor() {
     showModalBottomSheet(

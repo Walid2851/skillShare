@@ -395,36 +395,140 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ],
     );
   }
-
   Widget _buildBioSection(Map<String, dynamic> user) {
-    return Container(
-      margin: EdgeInsets.only(top: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Bio',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade800,
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _fetchUserBio(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(),
             ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            user['bio'] ?? 'No bio available',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
-              height: 1.4,
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Error loading bio: ${snapshot.error}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    onPressed: () => _fetchUserBio(),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
             ),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
+          );
+        }
+
+        final bio = snapshot.data?['bio'] ?? 'No bio available';
+
+        return Container(
+          margin: const EdgeInsets.only(top: 12),
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Bio',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                bio,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                  height: 1.4,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
+
+  Future<String?> _getCurrentUserId() async {
+    try {
+      final firebaseUid = authController.user.value?.uid;
+      if (firebaseUid == null) return null;
+
+      // Query Supabase for the user record
+      final userData = await _supabase
+          .from('users')
+          .select('id')
+          .eq('firebase_uid', firebaseUid)
+          .single();
+
+      // Return the ID as a string, handling potential null values
+      return userData['id']?.toString();
+    } catch (e) {
+      _showError('Failed to get user ID');
+      return null;
+    }
+  }
+  void _showError(String message) {
+    Get.snackbar(
+      'Error',
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red.withOpacity(0.1),
+      colorText: Colors.red,
+      duration: Duration(seconds: 3),
+    );
+  }
+  Future<Map<String, dynamic>> _fetchUserBio() async {
+    try {
+      final currentUserId = await _getCurrentUserId();
+      print('Current User ID: $currentUserId');
+
+      if (currentUserId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await Supabase.instance.client
+          .from('users')
+          .select('bio')
+          .eq('id', currentUserId)
+          .maybeSingle();
+
+      print('Raw Supabase Response: $response');
+
+      // If response is null, return default
+      if (response == null) {
+        return {'bio': 'No bio available'};
+      }
+
+      // Cast response to Map
+      final Map<String, dynamic> data = response;
+      print('Parsed Data: $data');
+
+      return data.isNotEmpty ? data : {'bio': 'No bio available'};
+
+    } catch (e) {
+      print('Error in _fetchUserBio: $e');
+      throw Exception('Failed to fetch bio: ${e.toString()}');
+    }
+  }
+
 
   Widget _buildSkillsList(List<dynamic> userSkills) {
     return Column(
