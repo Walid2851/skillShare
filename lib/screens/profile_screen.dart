@@ -575,7 +575,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 child: Text(
                                   skill.proficiencyLevel ?? 'Beginner',  // Provide default value
                                   style: TextStyle(
-                                    color: Colors.blue.shade700,
+                                    color: Colors.grey.shade900,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -664,7 +664,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     .map((level) => ChoiceChip(
                   label: Text(level),
                   selected: skill.proficiencyLevel == level,
-                  selectedColor: Colors.blue.shade100,
+                  selectedColor: Colors.grey.shade900,
                   onSelected: (selected) {
                     if (selected) {
                       setDialogState(() {
@@ -681,7 +681,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: Text('Offering this skill'),
                 subtitle: Text('Turn off if you want to learn this skill instead'),
                 value: skill.isOffering,
-                activeColor: Colors.blue,
+                activeColor: Colors.grey.shade900,
                 onChanged: (value) {
                   setDialogState(() {
                     skill.isOffering = value;
@@ -842,8 +842,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             icon: Icon(Icons.logout),
                             label: Text('Sign Out'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red.shade50,
-                              foregroundColor: Colors.red,
+                              backgroundColor: Colors.grey.shade900,
+                              foregroundColor: Colors.white,
                               minimumSize: Size(double.infinity, 50),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -888,7 +888,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             child: Icon(
               icon,
-              color: Colors.blue.shade600,
+              color: Colors.grey.shade900,
               size: 24,
             ),
           ),
@@ -945,7 +945,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
             child: Text(
               'Sign Out',
-              style: TextStyle(color: Colors.red),
+              style: TextStyle(color: Colors.black),
             ),
           ),
         ],
