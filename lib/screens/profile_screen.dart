@@ -30,7 +30,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadSkills() async {
     try {
-      // Load all available skills
+      // Load all available skills (including custom skills)
       final skillsResponse = await _supabase
           .from('skills')
           .select()
@@ -341,7 +341,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Skills',
+                'My Skills',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -349,6 +349,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   letterSpacing: 0.5,
                 ),
               ),
+              // TextButton.icon(
+              //   onPressed: () => _addNewSkill(),
+              //   icon: Icon(Icons.add, size: 20),
+              //   label: Text('Add'),
+              //   style: TextButton.styleFrom(
+              //     foregroundColor: Colors.blue.shade600,
+              //     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              //     shape: RoundedRectangleBorder(
+              //       borderRadius: BorderRadius.circular(12),
+              //     ),
+              //   ),
+              // ),
               TextButton.icon(
                 onPressed: () => _showBioInputDialog(),
                 icon: Icon(Icons.edit_outlined, size: 20),
@@ -379,7 +391,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Wrap(
             spacing: 12,
             runSpacing: 12,
-            children: availableSkills.map((skill) {
+            children: userSkills.map((skill) {
               final isUserSkill = userSkills.contains(skill);
               return Container(
                 decoration: BoxDecoration(
@@ -394,6 +406,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Text(
                   skill.name,
                   style: TextStyle(
+
                     color: isUserSkill ? Colors.white: Colors.grey.shade700,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -519,6 +532,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showSkillsEditor() {
+    TextEditingController customSkillController = TextEditingController();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -554,6 +568,70 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
+              // Custom Skill Section
+              Padding(
+                padding: EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: customSkillController,
+                        decoration: InputDecoration(
+                          hintText: 'Enter custom skill',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.add),
+                      onPressed: () async {
+                        final customSkill = customSkillController.text.trim();
+                        if (customSkill.isNotEmpty) {
+                          try {
+                            // Insert the custom skill into the database
+                            final response = await _supabase.from('skills').insert({
+                              'name': customSkill,
+                              'description': 'custom skill', // Optionally, provide a description
+                            }).select().single();
+
+                            // Get the auto-generated ID
+                            final newSkillId = response['skill_id'];
+
+                            // Ensure the ID is not null
+                            if (newSkillId != null) {
+                              setModalState(() {
+                                // Create a new skill object with the inserted ID
+                                final newSkill = Skill(
+                                  id: newSkillId, // Use the auto-generated ID from Supabase
+                                  name: customSkill,
+                                  isSelected: false,
+                                );
+
+                                availableSkills.add(newSkill); // Add to the list of available skills
+                              });
+
+                              customSkillController.clear(); // Clear the input field
+                            } else {
+                              throw Exception('Failed to get new skill ID');
+                            }
+                          } catch (e) {
+                            print('Error inserting custom skill: $e');
+                            // Show a snackbar or alert here
+                            Get.snackbar(
+                              'Error',
+                              'There was an issue adding the skill. Please try again.',
+                              snackPosition: SnackPosition.BOTTOM,
+                            );
+                          }
+                        }
+                      },
+                    ),
+
+                  ],
+                ),
+              ),
+              // Skills List
               Expanded(
                 child: ListView.builder(
                   padding: EdgeInsets.all(16),
@@ -564,15 +642,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       margin: EdgeInsets.only(bottom: 8),
                       child: Theme(
                         data: Theme.of(context).copyWith(
-                          unselectedWidgetColor: Colors.grey.shade400,
+                          unselectedWidgetColor: Colors.grey,
                         ),
                         child: CheckboxListTile(
                           value: skill.isSelected,
                           onChanged: (bool? value) {
-                            if (value == true && userSkills.length >= 5) {
+                            if (value == true && userSkills.length >= 10) {
                               Get.snackbar(
                                 'Limit Reached',
-                                'You can select up to 5 skills',
+                                'You can select up to 10 skills',
                                 snackPosition: SnackPosition.BOTTOM,
                               );
                               return;
@@ -604,7 +682,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  skill.proficiencyLevel ?? 'Beginner',  // Provide default value
+                                  skill.proficiencyLevel ?? 'Beginner',
                                   style: TextStyle(
                                     color: Colors.grey.shade900,
                                     fontSize: 12,
@@ -655,7 +733,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: EdgeInsets.all(16),
                 child: ElevatedButton(
                   onPressed: () async {
-                    await _updateSkills(availableSkills);
+                    await _updateSkills(availableSkills); // Make sure to save these changes
                     Navigator.pop(context);
                   },
                   child: Text('Save Changes'),
@@ -744,16 +822,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .delete()
           .eq('user_id', userId);
 
-      // Insert new skills
-      final selectedSkills = updatedSkills.where((s) => s.isSelected);
+      // Iterate through the updated skills
+      final selectedSkills = updatedSkills.where((s) => s.isSelected).toList();
       for (var skill in selectedSkills) {
-        await _supabase.from('user_skills').insert({
-          'user_id': userId,
-          'skill_id': skill.id,
-          'is_offering': skill.isOffering,
-          'proficiency_level': skill.proficiencyLevel,
-        });
+        if (skill.id == null) {
+          // Handle custom skills (if no ID, insert into the skills table)
+          final newSkillResponse = await _supabase.from('skills').insert({
+            'name': skill.name,
+            'description': skill.description ?? 'custom skill', // Insert description, fallback to empty string if null
+          }).single();
+
+          // Use the ID of the new custom skill from the skills table
+          final newSkillId = newSkillResponse['id'];
+
+          // Now insert the custom skill into the user_skills table
+          await _supabase.from('user_skills').insert({
+            'user_id': userId,
+            'skill_id': newSkillId,  // Insert the new skill's ID
+            'is_offering': skill.isOffering,
+            'proficiency_level': skill.proficiencyLevel,
+          });
+        } else {
+          // For existing skills, just insert them into user_skills
+          await _supabase.from('user_skills').insert({
+            'user_id': userId,
+            'skill_id': skill.id,  // Use the existing skill's ID
+            'is_offering': skill.isOffering,
+            'proficiency_level': skill.proficiencyLevel,
+          });
+        }
       }
+
 
       setState(() {
         userSkills = List.from(selectedSkills);
@@ -811,7 +910,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   'No profile data found',
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.grey.shade600,
+                    color: Colors.green.shade600,
                   ),
                 ),
               );
