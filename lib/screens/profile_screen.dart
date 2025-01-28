@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:skill/models/skills.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+String _bioInput = '';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -19,6 +20,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<Skill> userSkills = [];
   File? _image;
   final ImagePicker _picker = ImagePicker();
+  final TextEditingController _textController = TextEditingController();
 
   @override
   void initState() {
@@ -348,6 +350,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               TextButton.icon(
+                onPressed: () => _showBioInputDialog(),
+                icon: Icon(Icons.edit_outlined, size: 20),
+                label: Text('Edit bio'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.blue.shade600,
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              TextButton.icon(
                 onPressed: () => _showSkillsEditor(),
                 icon: Icon(Icons.edit_outlined, size: 20),
                 label: Text('Edit'),
@@ -423,6 +437,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
       duration: Duration(seconds: 3),
     );
   }
+
+
+
+
+  void _showBioInputDialog() async {
+    // Show a dialog with a TextField
+    String? userInput = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Enter Your Bio here...", style: TextStyle(fontSize: 20),),
+          content: TextField(
+            controller: _textController,
+            decoration: InputDecoration(
+              hintText: "Write about yourself...",
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(null); // Return null if canceled
+              },
+              child: Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                String input = _textController.text;
+                Navigator.of(context).pop(input); // Return the input
+              },
+              child: Text("Submit"),
+            ),
+          ],
+        );
+      },
+    );
+    // Process the returned input
+    if (userInput != null && userInput.isNotEmpty) {
+      _bioInput = userInput;
+      print(_bioInput);
+      // Example: Do something with the input (e.g., print it)
+      //print("Received input: $userInput");
+    } else {
+      //print("Input was canceled or empty");
+    }
+
+    // Clear the controller for the next input
+    _textController.clear();
+  }
+
 
   void _showSkillsEditor() {
     showModalBottomSheet(
