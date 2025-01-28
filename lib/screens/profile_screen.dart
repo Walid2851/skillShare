@@ -96,45 +96,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       // Pick the image
       final XFile? pickedFile = await _picker.pickImage(source: source);
-      if (pickedFile != null) {
-        final File imageFile = File(pickedFile.path);
+      if (pickedFile == null) return;
 
-        // Upload the image to Supabase storage
-        final String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final String filePath = 'profiles/$fileName'; // Path in the bucket
+      final File imageFile = File(pickedFile.path);
 
-        await _supabase.storage
-            .from('profiles') // Bucket name
-            .upload(filePath, imageFile);
-
-        // Get the public URL of the uploaded image
-        final String imageUrl = _supabase.storage
-            .from('profiles')
-            .getPublicUrl(filePath);
-
-        // Update the state with the new image
-        setState(() {
-          _image = imageFile;
-        });
-
-        // Save the image URL to the user's profile in the database
-        await _updateProfileImage(imageUrl);
+      // Validate if the file is an image
+      if (!(await imageFile.exists())) {
+        print("Invalid file selected");
+        return;
       }
+
+      // Upload the image to Supabase storage
+      final String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final String filePath = 'profiles/$fileName';
+
+      await _supabase.storage
+          .from('profiles') // Bucket name
+          .upload(filePath, imageFile);
+
+      // Get the public URL of the uploaded image
+      final String imageUrl = _supabase.storage
+          .from('profiles')
+          .getPublicUrl(filePath);
+
+      // Update the state with the new image
+      setState(() {
+        _image = imageFile;
+      });
+
+      // Save the image URL to the user's profile in the database
+      await _updateProfileImage(imageUrl);
+
     } catch (e) {
       print("Error picking or uploading image: $e");
     }
   }
-
   Future<void> _updateProfileImage(String imageUrl) async {
+    if (imageUrl.isEmpty) {
+      print("Invalid image URL");
+      return;
+    }
+
     try {
       final String? userId = await _getCurrentUserId();
-      if (userId == null) return;
+      if (userId == null) {
+        print("No user ID found");
+        return;
+      }
 
       // Update the user's profile with the new image URL
-      await _supabase
+      final response = await _supabase
           .from('users')
           .update({'profile_image_url': imageUrl})
           .eq('id', userId);
+
+      if (response.error != null) {
+        print("Error updating profile image URL: ${response.error!.message}");
+      } else {
+        print("Profile image URL updated successfully");
+      }
     } catch (e) {
       print("Error updating profile image URL: $e");
     }
@@ -164,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SafeArea(
             child: Column(
               children: [
-                // Top bar
+                // Top bar (unchanged)
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
@@ -187,7 +207,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   alignment: Alignment.bottomRight,
                   children: [
                     InkWell(
-                      //onTap: _pickImage,
+                      onTap: _pickImage,
                       child: Container(
                         width: 120,
                         height: 120,
@@ -195,19 +215,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 4),
                           color: Colors.white,
-                          image: _image != null
-                              ? DecorationImage(
-                            image: FileImage(_image!),
-                            fit: BoxFit.cover,
-                          )
-                              : null,
+                          image: _getProfileImageDecoration(userData),
                         ),
-                        child: _image == null
+                        child: _shouldShowInitial(userData)
                             ? Center(
                           child: Text(
-                            (userData['first_name'] as String?)?.isNotEmpty == true
-                                ? (userData['first_name'] as String)[0].toUpperCase()
-                                : '?',
+                            _getInitial(userData),
                             style: TextStyle(
                               fontSize: 35,
                               fontWeight: FontWeight.bold,
@@ -218,26 +231,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             : null,
                       ),
                     ),
+                    // Camera button (unchanged)
                     Positioned(
                       bottom: 0,
                       right: 0,
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.blue.shade600,
-                          shape: BoxShape.circle, // Circular shape for the container
+                          shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
                         ),
                         child: IconButton(
-                          icon: Icon(Icons.camera_alt, color: Colors.white, size: 20), // Camera icon
+                          icon: Icon(Icons.camera_alt,
+                              color: Colors.white, size: 20),
                           onPressed: _pickImage,
-                          padding: EdgeInsets.zero, // Remove extra padding
+                          padding: EdgeInsets.zero,
                         ),
                       ),
                     ),
                   ],
                 ),
 
-                // Name and username
+                // Name and username (unchanged)
                 SizedBox(height: 16),
                 Text(
                   '${userData['first_name']} ${userData['last_name']}',
@@ -270,6 +285,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+
+// Helper methods
+  DecorationImage? _getProfileImageDecoration(Map<String, dynamic> userData) {
+    if (_image != null) {
+      return DecorationImage(
+        image: FileImage(_image!),
+        fit: BoxFit.cover,
+      );
+    }
+
+    final imageUrl = userData['profile_image_url']?.toString();
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return DecorationImage(
+        image: NetworkImage(imageUrl),
+        fit: BoxFit.cover,
+      );
+    }
+
+    return null;
+  }
+
+  bool _shouldShowInitial(Map<String, dynamic> userData) {
+    return _image == null &&
+        (userData['profile_image_url'] == null ||
+            userData['profile_image_url'].isEmpty);
+  }
+
+  String _getInitial(Map<String, dynamic> userData) {
+    final firstName = userData['first_name']?.toString() ?? '';
+    return firstName.isNotEmpty ? firstName[0].toUpperCase() : '?';
+  }
+
+
 
   Widget _buildSkillsSection() {
     return Container(

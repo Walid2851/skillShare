@@ -310,11 +310,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       height: 100,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.blue.shade300, Colors.blue.shade500],
-        ),
         boxShadow: [
           BoxShadow(
             color: Colors.blue.withOpacity(0.2),
@@ -323,9 +318,45 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
         ],
       ),
+      child: ClipOval(
+        child: user['profile_image_url'] != null && user['profile_image_url'].isNotEmpty
+            ? Image.network(
+          user['profile_image_url'],
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                    loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return _buildFallbackAvatar(user);
+          },
+        )
+            : _buildFallbackAvatar(user),
+      ),
+    );
+  }
+
+  Widget _buildFallbackAvatar(Map<String, dynamic> user) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Colors.blue.shade300, Colors.blue.shade500],
+        ),
+      ),
       child: Center(
         child: Text(
-          user['first_name'][0].toUpperCase(),
+          user['first_name'].isNotEmpty
+              ? user['first_name'][0].toUpperCase()
+              : '?',
           style: TextStyle(
             color: Colors.white,
             fontSize: 40,
