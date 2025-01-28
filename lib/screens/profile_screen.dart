@@ -175,8 +175,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFF2196F3),
-                  Color(0xFF1976D2),
+                  Color(0xFF101112),
+                  Color(0xFF353B42),
                 ],
               ),
             ),
@@ -226,7 +226,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: TextStyle(
                               fontSize: 35,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1976D2),
+                              color: Color(0xFF1F1F20),
                             ),
                           ),
                         )
@@ -239,7 +239,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       right: 0,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.blue.shade600,
+                          color: Colors.grey.shade900,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
                         ),
@@ -354,7 +354,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: Icon(Icons.edit_outlined, size: 20),
                 label: Text('Edit bio'),
                 style: TextButton.styleFrom(
-                  foregroundColor: Colors.blue.shade600,
+                  foregroundColor: Colors.grey.shade900,
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -366,7 +366,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: Icon(Icons.edit_outlined, size: 20),
                 label: Text('Edit Skill'),
                 style: TextButton.styleFrom(
-                  foregroundColor: Colors.blue.shade600,
+                  foregroundColor: Colors.grey.shade900,
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -383,10 +383,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               final isUserSkill = userSkills.contains(skill);
               return Container(
                 decoration: BoxDecoration(
-                  color: isUserSkill ? Colors.blue.shade50 : Colors.grey.shade100,
+                  color: isUserSkill ? Colors.grey.shade900 : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(25),
                   border: Border.all(
-                    color: isUserSkill ? Colors.blue.shade200 : Colors.grey.shade300,
+                    color: isUserSkill ? Colors.grey.shade900 : Colors.grey.shade300,
                     width: 1.5,
                   ),
                 ),
@@ -394,7 +394,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Text(
                   skill.name,
                   style: TextStyle(
-                    color: isUserSkill ? Colors.blue.shade700 : Colors.grey.shade700,
+                    color: isUserSkill ? Colors.white: Colors.grey.shade700,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
