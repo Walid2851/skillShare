@@ -364,7 +364,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               TextButton.icon(
                 onPressed: () => _showSkillsEditor(),
                 icon: Icon(Icons.edit_outlined, size: 20),
-                label: Text('Edit'),
+                label: Text('Edit Skill'),
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.blue.shade600,
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
