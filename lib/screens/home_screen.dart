@@ -145,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   child: Text(
                     userData['first_name'][0].toUpperCase(),
                     style: TextStyle(
-                      color: Colors.blue.shade700,
+                      color: Colors.black,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -283,17 +283,33 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
+  Future<String?> fetchSignedProfileUrl(String filePath, int expiresIn) async {
+    try {
+      // Replace 'profiles' with your bucket name if it's different
+      final signedUrl = await Supabase.instance.client.storage
+          .from('profiles')
+          .createSignedUrl(filePath, expiresIn);
+
+      if (signedUrl != null) {
+        print("Signed URL: $signedUrl");
+        return signedUrl;
+      } else {
+        print("Failed to fetch signed URL.");
+        return null;
+      }
+    } catch (e) {
+      print("Error fetching signed URL: $e");
+      return null;
+    }
+  }
+
+
   Widget _buildUserAvatar(Map<String, dynamic> user) {
     return Container(
       width: 100,
       height: 100,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.blue.shade300, Colors.blue.shade500],
-        ),
         boxShadow: [
           BoxShadow(
             color: Colors.blue.withOpacity(0.2),
@@ -302,9 +318,46 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
         ],
       ),
+      child: ClipOval(
+        child: user['profile_image_url'] != null && user['profile_image_url'].isNotEmpty
+            ? Image.network(
+          user['profile_image_url'],
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                    loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return _buildFallbackAvatar(user);
+          },
+        )
+            : _buildFallbackAvatar(user),
+      ),
+    );
+  }
+
+  Widget _buildFallbackAvatar(Map<String, dynamic> user) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Colors.black, Colors.grey.shade900],
+
+        ),
+      ),
       child: Center(
         child: Text(
-          user['first_name'][0].toUpperCase(),
+          user['first_name'].isNotEmpty
+              ? user['first_name'][0].toUpperCase()
+              : '?',
           style: TextStyle(
             color: Colors.white,
             fontSize: 40,
@@ -446,7 +499,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: ElevatedButton(
         onPressed: () => Get.to(() => ConnectScreen(user: user)),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
+          backgroundColor: Colors.grey.shade900,
           foregroundColor: Colors.white,
           elevation: 2,
           padding: EdgeInsets.symmetric(vertical: 16),
@@ -457,7 +510,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         child: Text(
           'Connect',
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
         ),

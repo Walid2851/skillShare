@@ -3,6 +3,9 @@ import 'package:get/get.dart';
 import '../controller/auth_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:skill/models/skills.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+String _bioInput = '';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -15,6 +18,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool isEditing = false;
   List<Skill> availableSkills = [];
   List<Skill> userSkills = [];
+  File? _image;
+  final ImagePicker _picker = ImagePicker();
+  final TextEditingController _textController = TextEditingController();
 
   @override
   void initState() {
@@ -63,27 +69,116 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _pickImage() async {
+    try {
+      // Show a dialog to choose between camera and gallery
+      final ImageSource? source = await showDialog<ImageSource>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Select Image Source"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.camera_alt),
+                title: Text("Camera"),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_library),
+                title: Text("Gallery"),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (source == null) return; // User canceled the selection
+
+      // Pick the image
+      final XFile? pickedFile = await _picker.pickImage(source: source);
+      if (pickedFile == null) return;
+
+      final File imageFile = File(pickedFile.path);
+
+      // Validate if the file is an image
+      if (!(await imageFile.exists())) {
+        print("Invalid file selected");
+        return;
+      }
+
+      // Upload the image to Supabase storage
+      final String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final String filePath = 'profiles/$fileName';
+
+      await _supabase.storage
+          .from('profiles') // Bucket name
+          .upload(filePath, imageFile);
+
+      // Get the public URL of the uploaded image
+      final String imageUrl = _supabase.storage
+          .from('profiles')
+          .getPublicUrl(filePath);
+
+      // Update the state with the new image
+      setState(() {
+        _image = imageFile;
+      });
+
+      // Save the image URL to the user's profile in the database
+      await _updateProfileImage(imageUrl);
+
+    } catch (e) {
+      print("Error picking or uploading image: $e");
+    }
+  }
+  Future<void> _updateProfileImage(String imageUrl) async {
+    if (imageUrl.isEmpty) {
+      print("Invalid image URL");
+      return;
+    }
+
+    try {
+      final String? userId = await _getCurrentUserId();
+      if (userId == null) {
+        print("No user ID found");
+        return;
+      }
+
+      // Update the user's profile with the new image URL
+      final response = await _supabase
+          .from('users')
+          .update({'profile_image_url': imageUrl})
+          .eq('id', userId);
+
+      if (response.error != null) {
+        print("Error updating profile image URL: ${response.error!.message}");
+      } else {
+        print("Profile image URL updated successfully");
+      }
+    } catch (e) {
+      print("Error updating profile image URL: $e");
+    }
+  }
+
   Widget _buildModernHeader(Map<String, dynamic> userData) {
     return Container(
-      height: 280,
+      height: 300,
       child: Stack(
         children: [
           // Background gradient with curved bottom
           Container(
-            height: 240,
+            height: 300,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFF2196F3),
-                  Color(0xFF1976D2),
+                  Color(0xFF101112),
+                  Color(0xFF353B42),
                 ],
               ),
-              // borderRadius: BorderRadius.only(
-              //   bottomLeft: Radius.circular(40),
-              //   bottomRight: Radius.circular(40),
-              // ),
             ),
           ),
 
@@ -91,9 +186,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SafeArea(
             child: Column(
               children: [
-                // Top bar
+                // Top bar (unchanged)
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -109,38 +204,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
 
-                // Profile picture
-                Container(
-                  margin: EdgeInsets.only(top: 16),
-                  width: 120,
-                  height: 45,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 4),
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 20,
-                        offset: Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      (userData['first_name'] as String?)?.isNotEmpty == true
-                          ? (userData['first_name'] as String)[0].toUpperCase()
-                          : '?',
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1976D2),
+                // Profile picture and Edit Profile button
+                Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    InkWell(
+                      onTap: _pickImage,
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 4),
+                          color: Colors.white,
+                          image: _getProfileImageDecoration(userData),
+                        ),
+                        child: _shouldShowInitial(userData)
+                            ? Center(
+                          child: Text(
+                            _getInitial(userData),
+                            style: TextStyle(
+                              fontSize: 35,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1F1F20),
+                            ),
+                          ),
+                        )
+                            : null,
                       ),
                     ),
-                  ),
+                    // Camera button (unchanged)
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade900,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: IconButton(
+                          icon: Icon(Icons.camera_alt,
+                              color: Colors.white, size: 20),
+                          onPressed: _pickImage,
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
 
-                // Name and username
+                // Name and username (unchanged)
                 SizedBox(height: 16),
                 Text(
                   '${userData['first_name']} ${userData['last_name']}',
@@ -172,6 +286,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
+  }
+
+// Helper methods
+  DecorationImage? _getProfileImageDecoration(Map<String, dynamic> userData) {
+    if (_image != null) {
+      return DecorationImage(
+        image: FileImage(_image!),
+        fit: BoxFit.cover,
+      );
+    }
+
+    final imageUrl = userData['profile_image_url']?.toString();
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return DecorationImage(
+        image: NetworkImage(imageUrl),
+        fit: BoxFit.cover,
+      );
+    }
+
+    return null;
+  }
+
+  bool _shouldShowInitial(Map<String, dynamic> userData) {
+    return _image == null &&
+        (userData['profile_image_url'] == null ||
+            userData['profile_image_url'].isEmpty);
+  }
+
+  String _getInitial(Map<String, dynamic> userData) {
+    final firstName = userData['first_name']?.toString() ?? '';
+    return firstName.isNotEmpty ? firstName[0].toUpperCase() : '?';
   }
 
   Widget _buildSkillsSection() {
@@ -217,11 +362,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
               //   ),
               // ),
               TextButton.icon(
+                onPressed: () => _showBioInputDialog(),
+                icon: Icon(Icons.edit_outlined, size: 20),
+                label: Text('Edit bio'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.grey.shade900,
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              TextButton.icon(
                 onPressed: () => _showSkillsEditor(),
                 icon: Icon(Icons.edit_outlined, size: 20),
-                label: Text('Edit'),
+                label: Text('Edit Skill'),
                 style: TextButton.styleFrom(
-                  foregroundColor: Colors.blue.shade600,
+                  foregroundColor: Colors.grey.shade900,
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -237,25 +394,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: userSkills.map((skill) {
               final isUserSkill = userSkills.contains(skill);
               return Container(
-                  decoration: BoxDecoration(
-                  color: Colors.blueGrey,
+                decoration: BoxDecoration(
+                  color: isUserSkill ? Colors.grey.shade900 : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(25),
                   border: Border.all(
-                  color: Colors.blueGrey,
-                  width: 1.5,
-                // decoration: BoxDecoration(
-                //   color: isUserSkill ? Colors.blueGrey : Colors.brown.shade100,
-                //   borderRadius: BorderRadius.circular(25),
-                //   border: Border.all(
-                //     color: isUserSkill ? Colors.blueGrey : Colors.brown.shade300,
-                //     width: 1.5,
+                    color: isUserSkill ? Colors.grey.shade900 : Colors.grey.shade300,
+                    width: 1.5,
                   ),
                 ),
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 child: Text(
                   skill.name,
                   style: TextStyle(
-                    color: isUserSkill ? Colors.white : Colors.black,
+
+                    color: isUserSkill ? Colors.white: Colors.grey.shade700,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -298,6 +450,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
       duration: Duration(seconds: 3),
     );
   }
+
+
+
+
+  void _showBioInputDialog() async {
+    // Show a dialog with a TextField
+    String? userInput = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Enter Your Bio here...", style: TextStyle(fontSize: 20),),
+          content: TextField(
+            controller: _textController,
+            decoration: InputDecoration(
+              hintText: "Write about yourself...",
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(null); // Return null if canceled
+              },
+              child: Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                String input = _textController.text;
+                Navigator.of(context).pop(input); // Return the input
+              },
+              child: Text("Submit"),
+            ),
+          ],
+        );
+      },
+    );
+    // Process the returned input
+    if (userInput != null && userInput.isNotEmpty) {
+      _bioInput = userInput;
+      print(_bioInput);
+      // Example: Do something with the input (e.g., print it)
+      //print("Received input: $userInput");
+    } else {
+      //print("Input was canceled or empty");
+    }
+
+    // Clear the controller for the next input
+    _textController.clear();
+  }
+
 
   void _showSkillsEditor() {
     TextEditingController customSkillController = TextEditingController();
@@ -452,7 +653,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 child: Text(
                                   skill.proficiencyLevel ?? 'Beginner',
                                   style: TextStyle(
-                                    color: Colors.blue.shade700,
+                                    color: Colors.grey.shade900,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -541,7 +742,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     .map((level) => ChoiceChip(
                   label: Text(level),
                   selected: skill.proficiencyLevel == level,
-                  selectedColor: Colors.blue.shade100,
+                  selectedColor: Colors.grey.shade900,
                   onSelected: (selected) {
                     if (selected) {
                       setDialogState(() {
@@ -558,7 +759,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: Text('Offering this skill'),
                 subtitle: Text('Turn off if you want to learn this skill instead'),
                 value: skill.isOffering,
-                activeColor: Colors.blue,
+                activeColor: Colors.grey.shade900,
                 onChanged: (value) {
                   setDialogState(() {
                     skill.isOffering = value;
@@ -740,8 +941,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             icon: Icon(Icons.logout),
                             label: Text('Sign Out'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red.shade50,
-                              foregroundColor: Colors.red,
+                              backgroundColor: Colors.grey.shade900,
+                              foregroundColor: Colors.white,
                               minimumSize: Size(double.infinity, 50),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -786,7 +987,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             child: Icon(
               icon,
-              color: Colors.blue.shade600,
+              color: Colors.grey.shade900,
               size: 24,
             ),
           ),
@@ -843,7 +1044,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
             child: Text(
               'Sign Out',
-              style: TextStyle(color: Colors.red),
+              style: TextStyle(color: Colors.black),
             ),
           ),
         ],

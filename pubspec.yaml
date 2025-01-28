@@ -43,11 +43,12 @@ dependencies:
   lottie: ^3.3.1
   animated_text_kit: ^4.2.2
   image_picker: ^0.8.7+5
+  cached_network_image: ^3.2.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
+  flutter_launcher_icons: ^0.13.1
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -68,10 +69,14 @@ flutter:
 
 
   assets:
-    - assets/google_icon.png
-    - assets/apple_icon.png
-    - assets/splash_animation.json
+    - assets/
 
+flutter_icons:
+  android: true
+  ios: true
+  adaptive_icon_background: "#2196F3" # Background color for adaptive icons
+  adaptive_icon_foreground: "assets/logo.png"
+  image_path: "assets/logo.png"
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
@@ -97,3 +102,4 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
