@@ -145,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   child: Text(
                     userData['first_name'][0].toUpperCase(),
                     style: TextStyle(
-                      color: Colors.blue.shade700,
+                      color: Colors.black,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -349,7 +349,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Colors.blue.shade300, Colors.blue.shade500],
+          colors: [Colors.black, Colors.grey.shade900],
+
         ),
       ),
       child: Center(
@@ -498,7 +499,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: ElevatedButton(
         onPressed: () => Get.to(() => ConnectScreen(user: user)),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
+          backgroundColor: Colors.grey.shade900,
           foregroundColor: Colors.white,
           elevation: 2,
           padding: EdgeInsets.symmetric(vertical: 16),
@@ -509,7 +510,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         child: Text(
           'Connect',
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
         ),

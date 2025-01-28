@@ -317,8 +317,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return firstName.isNotEmpty ? firstName[0].toUpperCase() : '?';
   }
 
-
-
   Widget _buildSkillsSection() {
     return Container(
       margin: EdgeInsets.all(16),
