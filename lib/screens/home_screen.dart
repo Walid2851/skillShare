@@ -6,6 +6,8 @@ import 'chat_screen.dart';
 import 'profile_screen.dart';
 import 'connect_screen.dart';
 import 'notifications_screen.dart';
+import 'about_screen.dart';
+
 
 class HomeScreen extends StatefulWidget {
   @override

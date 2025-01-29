@@ -9,6 +9,8 @@ import 'screens/signup_screen.dart';
 import 'firebase_options.dart';
 import '../controller/auth_controller.dart';
 import 'screens/profile_screen.dart';
+import 'screens/about_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,6 +49,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/home', page: () => HomeScreen()),
         GetPage(name: '/chat', page: () => ChatScreen()),
         GetPage(name: '/profile', page: () => ProfileScreen()),
+        GetPage(name: '/about', page: () => AboutScreen()),
       ],
     );
   }
