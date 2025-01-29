@@ -49,7 +49,7 @@ class _SkillDillState extends State<SkillDillScreen> {
           NavigationDestination(
             icon: Icon(Icons.sync_outlined),
             selectedIcon: Icon(Icons.sync),
-            label: 'Skill Swap',
+            label: 'Skill Deals',
           ),
           NavigationDestination(
             icon: Icon(Icons.chat_bubble_outlined),
@@ -104,15 +104,15 @@ class _SkillDillState extends State<SkillDillScreen> {
               child: ListView(
                 children: [
                   SkillDealCard(
-                    userName: 'Luke',
-                    userImage: 'assets/luke.jpg',
+                    userName: 'Manob',
+                    userImage: 'assets/manob.jpg',
                     skillOffered: 'DOG SITTING/TRAINER',
                     skillNeeded: 'ARTS',
-                    skillImage: 'assets/arts.jpg',
+                    skillImage: 'assets/',
                   ),
                   SkillDealCard(
-                    userName: 'Ingrid',
-                    userImage: 'assets/ingrid.jpg',
+                    userName: 'Man Man',
+                    userImage: 'assets/walid.jpg',
                     skillOffered: 'WINDOW CLEANING',
                     skillNeeded: 'SCULPTURING',
                     skillImage: 'assets/sculpturing.jpg',
@@ -222,8 +222,14 @@ class SkillDealCard extends StatelessWidget {
           SizedBox(width: 10),
           CircleAvatar(
             backgroundImage: skillImage != null ? AssetImage(skillImage!) : null,
-            backgroundColor: skillImage == null ? Colors.black : Colors.transparent,
+            backgroundColor: skillImage == null ? Colors.grey.shade300 : Colors.transparent,
             radius: 25,
+            child: skillImage == null
+                ? Text(
+              userName[0].toUpperCase(),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+            )
+                : null,
           ),
         ],
       ),

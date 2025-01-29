@@ -63,7 +63,7 @@ class ChatScreen extends StatelessWidget {
           NavigationDestination(
             icon: Icon(Icons.sync_outlined),
             selectedIcon: Icon(Icons.sync),
-            label: 'Skill Swap',
+            label: 'Skill Deals',
           ),
           NavigationDestination(
             icon: Icon(Icons.chat_bubble_outlined),
