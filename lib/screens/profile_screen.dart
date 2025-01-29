@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:skill/models/skills.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+
+import 'about_screen.dart';
 String _bioInput = '';
 
 class ProfileScreen extends StatefulWidget {
@@ -22,6 +24,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final ImagePicker _picker = ImagePicker();
   final TextEditingController _textController = TextEditingController();
 
+  void _showSettingsMenu() {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: Icon(Icons.info_outline, color: Colors.blue),
+            title: Text('About Us'),
+            onTap: () {
+              Navigator.pop(context); // Close the menu
+              Get.to(() => AboutScreen()); // Navigate to About Us Page
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.logout, color: Colors.red),
+            title: Text('Sign Out'),
+            onTap: () {
+              Navigator.pop(context);
+              _showSignOutConfirmation(); // Calls logout function
+            },
+          ),
+        ],
+      ),
+    );
+  }
+  
   @override
   void initState() {
     super.initState();
@@ -198,8 +230,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       IconButton(
                         icon: Icon(Icons.settings, color: Colors.white),
-                        onPressed: () {},
+                        onPressed: () => _showSettingsMenu(), // Call the new settings menu method
                       ),
+
                     ],
                   ),
                 ),
@@ -1083,3 +1116,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+

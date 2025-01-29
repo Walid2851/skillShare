@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/auth_controller.dart';
+import 'about_screen.dart';
 
 class SignupScreen extends StatelessWidget {
   SignupScreen({Key? key}) : super(key: key);
@@ -88,6 +89,23 @@ class SignupScreen extends StatelessWidget {
                     const SizedBox(height: 32),
                     Obx(() => _buildSignUpButton()),
                     const SizedBox(height: 16),
+
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Get.to(() => AboutScreen()); // Navigate to About Us
+                        },
+                        child: Text(
+                          'About Us',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.purple,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+
                     Center(
                       child: RichText(
                         text: TextSpan(
