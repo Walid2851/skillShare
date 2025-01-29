@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:skill/screens/profile_screen.dart';
+import 'package:skill/screens/skill_Dill.dart';
 import '../controller/auth_controller.dart';
 import 'home_screen.dart';
 class ChatScreen extends StatelessWidget {
@@ -41,6 +43,12 @@ class ChatScreen extends StatelessWidget {
           switch (index) {
             case 0:
               Get.off(() => HomeScreen());
+              break;
+            case 1:
+              Get.off(() => SkillDillScreen());
+              break;
+            case 3:
+              Get.off(() => ProfileScreen());
               break;
           }
         },

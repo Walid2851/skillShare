@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../controller/auth_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'chat_screen.dart';
+import 'skill_Dill.dart';
 import 'profile_screen.dart';
 import 'connect_screen.dart';
 import 'notifications_screen.dart';
@@ -629,6 +630,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       selectedIndex: 0,
       onDestinationSelected: (index) {
         switch (index) {
+          case 1:
+            Get.to(() => SkillDillScreen());
           case 2:
             Get.to(() => ChatScreen());
             break;
