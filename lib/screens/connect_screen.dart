@@ -264,6 +264,46 @@ class _ConnectScreenState extends State<ConnectScreen> with SingleTickerProvider
                   )).toList(),
             ),
           ),
+          SizedBox(height: 30),
+          Container(
+            height: 120,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300, // Background color
+              borderRadius: BorderRadius.circular(15), // Rounded corners
+            ),
+            padding: EdgeInsets.all(10), // Optional: Add padding for spacing
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align buttons horizontally
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black, // Button background color
+                    foregroundColor: Colors.white, // Text color
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10), // Button corner radius
+                    ),
+                  ),
+                  onPressed: () {
+                    // Add your button action here
+                  },
+                  child: Text('Skill Deal', style: TextStyle(fontSize: 27),),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black, // Button background color
+                    foregroundColor: Colors.white, // Text color
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10), // Button corner radius
+                    ),
+                  ),
+                  onPressed: () {
+                    // Add your button action here
+                  },
+                  child: Text('Tk 500/h', style: TextStyle(fontSize: 27),),
+                ),
+              ],
+            ),
+          )
         ],
       ),
     );
