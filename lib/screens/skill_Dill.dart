@@ -40,7 +40,7 @@ class _SkillDillState extends State<SkillDillScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.orange.shade400,
+        backgroundColor: Colors.black,
         elevation: 4,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.white),
@@ -108,7 +108,7 @@ class _SkillDillState extends State<SkillDillScreen> {
                 ElevatedButton(
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange.shade400,
+                    backgroundColor: Colors.black,
                   ),
                   child: Text('Archived', style: TextStyle(color: Colors.white)),
                 )
@@ -199,7 +199,7 @@ class SkillDealCard extends StatelessWidget {
                     Container(
                       padding: EdgeInsets.symmetric(vertical: 5, horizontal: 12),
                       decoration: BoxDecoration(
-                        color: Colors.orange.shade300,
+                        color: Colors.black,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
