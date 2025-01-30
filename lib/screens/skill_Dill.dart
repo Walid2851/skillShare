@@ -200,9 +200,9 @@ class SkillDealCard extends StatelessWidget {
                         style: TextStyle(color: Colors.white, fontSize: 12),
                       ),
                     ),
-                    SizedBox(width: 5),
+                    SizedBox(width: 10),
                     Icon(Icons.handshake, color: Colors.orange, size: 24),
-                    SizedBox(width: 7),
+                    SizedBox(width: 10),
                     Container(
                       padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                       decoration: BoxDecoration(

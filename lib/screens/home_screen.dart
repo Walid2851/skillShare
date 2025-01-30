@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/auth_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'another_chat.dart';
 import 'chat_screen.dart';
 import 'skill_Dill.dart';
 import 'profile_screen.dart';
@@ -633,7 +634,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           case 1:
             Get.to(() => SkillDillScreen());
           case 2:
-            Get.to(() => ChatScreen());
+            Get.to(() => MessagesScreen());
             break;
           case 3:
             Get.to(() => ProfileScreen());
