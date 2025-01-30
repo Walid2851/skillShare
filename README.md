@@ -21,14 +21,17 @@ To get started with this project on your local machine, follow these steps:
 - Firebase Account: Set up Firebase for authentication and Firestore database.
 - A code editor: VS Code or Android Studio recommended.
 
+
+
+### Download APK  
+
+[Download Latest APK](https://github.com/Walid2851/skillShare/releases/tag/v1.0.0)
+
+
 ### Clone the repository
 
 ```bash
 git clone https://github.com/yourusername/skillshare-app.git
 cd skillshare-app
-
-## Download APK  
-
-[Download Latest APK](https://github.com/Walid2851/skillShare/releases/tag/v1.0.0)
 
 
