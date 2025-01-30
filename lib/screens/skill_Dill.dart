@@ -12,54 +12,67 @@ class SkillDillScreen extends StatefulWidget {
 }
 
 class _SkillDillState extends State<SkillDillScreen> {
+  int _selectedIndex = 1; // Default selected index
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    // Navigate to different screens based on the selected index
+    switch (index) {
+      case 0:
+        Get.off(() => HomeScreen());
+        break;
+      case 2:
+        Get.off(() => MessagesScreen());
+        break;
+      case 3:
+        Get.off(() => ProfileScreen());
+        break;
+      default:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
+        backgroundColor: Colors.orange.shade400,
+        elevation: 4,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
+        title: Text(
+          'Skill Deals',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: 1,
-        onDestinationSelected: (index) {
-          switch (index) {
-            case 0:
-              Get.off(() => HomeScreen());
-              break;
-            case 2:
-              Get.off(() => MessagesScreen());
-              break;
-            case 3:
-              Get.off(() => ProfileScreen());
-              break;
-          }
-        },
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
         backgroundColor: Colors.white,
-        elevation: 0,
-        destinations: [
-          NavigationDestination(
+        elevation: 2,
+        selectedItemColor: Colors.orange.shade400,
+        unselectedItemColor: Colors.grey,
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
             label: 'Home',
           ),
-          NavigationDestination(
+          BottomNavigationBarItem(
             icon: Icon(Icons.sync_outlined),
-            selectedIcon: Icon(Icons.sync),
             label: 'Skill Deals',
           ),
-          NavigationDestination(
+          BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_outlined),
-            selectedIcon: Icon(Icons.chat_bubble),
             label: 'Chat',
           ),
-          NavigationDestination(
+          BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
             label: 'Profile',
           ),
         ],
@@ -69,7 +82,7 @@ class _SkillDillState extends State<SkillDillScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 40),
+            SizedBox(height: 20),
             Center(
               child: Text(
                 'MY SKILL DEALS',
@@ -89,14 +102,15 @@ class _SkillDillState extends State<SkillDillScreen> {
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 20,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 ElevatedButton(
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                    backgroundColor: Colors.orange.shade400,
                   ),
-                  child: Text('Archived'),
+                  child: Text('Archived', style: TextStyle(color: Colors.white)),
                 )
               ],
             ),
@@ -107,15 +121,15 @@ class _SkillDillState extends State<SkillDillScreen> {
                   SkillDealCard(
                     userName: 'Manob',
                     userImage: 'assets/manob.jpg',
-                    skillOffered: 'DOG SITTING/TRAINER',
-                    skillNeeded: 'ARTS',
+                    skillOffered: 'PYTHON',
+                    skillNeeded: 'MUSIC',
                     skillImage: 'assets/',
                   ),
                   SkillDealCard(
                     userName: 'Man Man',
                     userImage: 'assets/walid.jpg',
-                    skillOffered: 'WINDOW CLEANING',
-                    skillNeeded: 'SCULPTURING',
+                    skillOffered: 'CYBERSECURITY',
+                    skillNeeded: 'ML',
                     skillImage: 'assets/sculpturing.jpg',
                   ),
                 ],
@@ -146,36 +160,28 @@ class SkillDealCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.symmetric(vertical: 8),
-      padding: EdgeInsets.all(10),
+      margin: EdgeInsets.symmetric(vertical: 10),
+      padding: EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
+        color: Colors.grey.shade100,
         borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Stack(
-            children: [
-              CircleAvatar(
-                backgroundImage: AssetImage(userImage),
-                radius: 25,
-              ),
-              Positioned(
-                top: 0,
-                right: 0,
-                child: Container(
-                  padding: EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.check, color: Colors.white, size: 12),
-                ),
-              ),
-            ],
+          CircleAvatar(
+            backgroundImage: AssetImage(userImage),
+            radius: 30,
           ),
-          SizedBox(width: 10),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,53 +190,41 @@ class SkillDealCard extends StatelessWidget {
                   userName,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 18,
                   ),
                 ),
-                SizedBox(height: 5),
+                SizedBox(height: 6),
                 Row(
                   children: [
                     Container(
-                      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                      padding: EdgeInsets.symmetric(vertical: 5, horizontal: 12),
                       decoration: BoxDecoration(
                         color: Colors.orange.shade300,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         skillOffered,
-                        style: TextStyle(color: Colors.white, fontSize: 12),
+                        style: TextStyle(color: Colors.white, fontSize: 14),
                       ),
                     ),
                     SizedBox(width: 10),
-                    Icon(Icons.handshake, color: Colors.orange, size: 24),
+                    Icon(Icons.handshake, color: Colors.orange, size: 22),
                     SizedBox(width: 10),
                     Container(
-                      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                      padding: EdgeInsets.symmetric(vertical: 5, horizontal: 12),
                       decoration: BoxDecoration(
                         color: Colors.purple.shade300,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         skillNeeded,
-                        style: TextStyle(color: Colors.white, fontSize: 12),
+                        style: TextStyle(color: Colors.white, fontSize: 14),
                       ),
                     ),
                   ],
                 ),
               ],
             ),
-          ),
-          SizedBox(width: 10),
-          CircleAvatar(
-            backgroundImage: skillImage != null ? AssetImage(skillImage!) : null,
-            backgroundColor: skillImage == null ? Colors.grey.shade300 : Colors.transparent,
-            radius: 25,
-            child: skillImage == null
-                ? Text(
-              userName[0].toUpperCase(),
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
-            )
-                : null,
           ),
         ],
       ),
