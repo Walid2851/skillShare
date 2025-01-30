@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:skill/screens/chat_screen.dart';
 import 'package:skill/screens/profile_screen.dart';
 import '../controller/auth_controller.dart';
+import 'another_chat.dart';
 import 'home_screen.dart';
 
 class SkillDillScreen extends StatefulWidget {
@@ -31,7 +32,7 @@ class _SkillDillState extends State<SkillDillScreen> {
               Get.off(() => HomeScreen());
               break;
             case 2:
-              Get.off(() => ChatScreen());
+              Get.off(() => MessagesScreen());
               break;
             case 3:
               Get.off(() => ProfileScreen());
