@@ -219,18 +219,18 @@ class SkillDealCard extends StatelessWidget {
               ],
             ),
           ),
-          // SizedBox(width: 10),
-          // CircleAvatar(
-          //   backgroundImage: skillImage != null ? AssetImage(skillImage!) : null,
-          //   backgroundColor: skillImage == null ? Colors.grey.shade300 : Colors.transparent,
-          //   radius: 25,
-          //   child: skillImage == null
-          //       ? Text(
-          //     userName[0].toUpperCase(),
-          //     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
-          //   )
-          //       : null,
-          // ),
+          SizedBox(width: 10),
+          CircleAvatar(
+            backgroundImage: skillImage != null ? AssetImage(skillImage!) : null,
+            backgroundColor: skillImage == null ? Colors.grey.shade300 : Colors.transparent,
+            radius: 25,
+            child: skillImage == null
+                ? Text(
+              userName[0].toUpperCase(),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+            )
+                : null,
+          ),
         ],
       ),
     );

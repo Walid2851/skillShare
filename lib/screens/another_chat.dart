@@ -1,12 +1,96 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class ChatScreen extends StatelessWidget {
+class ChatScreen extends StatefulWidget {
   final Map<String, dynamic> user;
+  final String currentUserId;
+
+  ChatScreen({required this.user, required this.currentUserId});
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final SupabaseClient supabase = Supabase.instance.client;
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  List<Map<String, dynamic>> _messages = [];
 
-  ChatScreen({required this.user});
+  @override
+  void initState() {
+    super.initState();
+    _fetchMessages();
+    _listenForRealtimeUpdates();
+  }
+
+  /// Fetch chat messages from Supabase
+  Future<void> _fetchMessages() async {
+    final response = await supabase
+        .from('messages')
+        .select()
+        .or(
+        'and(from.eq.${widget.currentUserId},to.eq.${widget.user['id']})'
+            ',and(from.eq.${widget.user['id']},to.eq.${widget.currentUserId})'
+    )
+        .order('created_at', ascending: true);
+
+    setState(() {
+      _messages = response;
+    });
+
+    _scrollToBottom();
+  }
+
+  /// Listen for new messages in real-time
+  void _listenForRealtimeUpdates() {
+    supabase
+        .channel('messages')
+        .onPostgresChanges(
+      event: PostgresChangeEvent.insert,
+      schema: 'public',
+      table: 'messages',
+      callback: (payload) {
+        if ((payload.newRecord['from'] == widget.currentUserId &&
+            payload.newRecord['to'] == widget.user['id']) ||
+            (payload.newRecord['from'] == widget.user['id'] &&
+                payload.newRecord['to'] == widget.currentUserId)) {
+          setState(() {
+            _messages.add(payload.newRecord);
+          });
+          _scrollToBottom();
+        }
+      },
+    )
+        .subscribe();
+  }
+
+  /// Scroll to the latest message
+  void _scrollToBottom() {
+    Future.delayed(Duration(milliseconds: 100), () {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  /// Send message to Supabase
+  Future<void> _sendMessage() async {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
+    await supabase.from('messages').insert({
+      'from': widget.currentUserId,
+      'to': widget.user['id'],
+      'message': text,
+      'created_at': DateTime.now().toIso8601String(),
+    });
+
+    _messageController.clear();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +109,7 @@ class ChatScreen extends StatelessWidget {
               radius: 20,
               backgroundColor: Colors.purple.shade50,
               child: Text(
-                user['first_name'][0].toUpperCase(),
+                widget.user['first_name'][0].toUpperCase(),
                 style: TextStyle(
                   color: Colors.purple.shade600,
                   fontSize: 16,
@@ -38,7 +122,7 @@ class ChatScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${user['first_name']} ${user['last_name']}',
+                  '${widget.user['first_name']} ${widget.user['last_name']}',
                   style: TextStyle(
                     color: Colors.black87,
                     fontSize: 16,
@@ -63,7 +147,7 @@ class ChatScreen extends StatelessWidget {
             padding: EdgeInsets.all(16),
             color: Colors.blue.shade50,
             child: Text(
-              'You\'ve connected with ${user['first_name']}! Start your conversation about skill swapping.',
+              'You\'ve connected with ${widget.user['first_name']}! Start your conversation about skill swapping.',
               style: TextStyle(
                 color: Colors.blue.shade700,
                 fontSize: 14,
@@ -75,8 +159,8 @@ class ChatScreen extends StatelessWidget {
             child: ListView.builder(
               controller: _scrollController,
               padding: EdgeInsets.all(16),
-              itemCount: 1,
-              itemBuilder: (context, index) => _buildInitialMessage(),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) => _buildMessageBubble(_messages[index]),
             ),
           ),
           _buildMessageInput(),
@@ -85,45 +169,28 @@ class ChatScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInitialMessage() {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.purple.shade50,
-            child: Text(
-              user['first_name'][0].toUpperCase(),
-              style: TextStyle(
-                color: Colors.purple.shade600,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          SizedBox(width: 8),
-          Container(
-            constraints: BoxConstraints(maxWidth: Get.width * 0.7),
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              'Hi! I\'m excited to exchange skills with you. When would you like to start?',
-              style: TextStyle(
-                color: Colors.black87,
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ],
+  /// Chat bubble widget
+  Widget _buildMessageBubble(Map<String, dynamic> message) {
+    bool isMe = message['from'] == widget.currentUserId;
+
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: EdgeInsets.symmetric(vertical: 4),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isMe ? Colors.blue.shade400 : Colors.grey[200],
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          message['message'],
+          style: TextStyle(color: isMe ? Colors.white : Colors.black87),
+        ),
       ),
     );
   }
 
+  /// Input field with send button
   Widget _buildMessageInput() {
     return Container(
       padding: EdgeInsets.all(16),
@@ -166,7 +233,7 @@ class ChatScreen extends StatelessWidget {
             ),
             child: IconButton(
               icon: Icon(Icons.send_rounded, color: Colors.white),
-              onPressed: () {}, // Dummy onPressed
+              onPressed: _sendMessage,
             ),
           ),
         ],

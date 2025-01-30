@@ -20,6 +20,7 @@ class _ConnectScreenState extends State<ConnectScreen> with SingleTickerProvider
   late Animation<double> _rotateAnimation;
   bool _isLongPressed = false;
   bool _isConnecting = false;
+  late  Map<String, dynamic> currentUserr;
 
   @override
   void initState() {
@@ -40,10 +41,12 @@ class _ConnectScreenState extends State<ConnectScreen> with SingleTickerProvider
     _connectAnimController.addStatusListener((status) {
       if (status == AnimationStatus.completed && _isLongPressed) {
         setState(() => _isConnecting = true);
-        Future.delayed(Duration(milliseconds: 500), () {
+        Future.delayed(Duration(milliseconds: 500), () async {
+          final current = await _fetchUserData();
           Get.to(() =>
               ChatScreen(
                 user: widget.user,
+                currentUserId: current[0]["id"]
               ));
         });
       }
@@ -58,7 +61,7 @@ class _ConnectScreenState extends State<ConnectScreen> with SingleTickerProvider
 
   Future<List<dynamic>> _fetchUserData() async {
     try {
-      final currentUser = _auth.currentUser;
+      var currentUser = _auth.currentUser;
       if (currentUser == null) {
         throw Exception('No authenticated user found');
       }
@@ -72,7 +75,6 @@ class _ConnectScreenState extends State<ConnectScreen> with SingleTickerProvider
 
       // Properly cast the response to Map<String, dynamic>
       final currentUserData = Map<String, dynamic>.from(response as Map);
-
       // Now use the Supabase ID for fetching skills
       final results = await Future.wait<dynamic>([
         Future.value(currentUserData), // Pass the properly casted user data
@@ -549,6 +551,7 @@ class _ConnectScreenState extends State<ConnectScreen> with SingleTickerProvider
           final currentUserData = snapshot.data![0] as Map<String, dynamic>?;
           final otherUserSkills = snapshot.data![1] as List;
           final currentUserSkills = snapshot.data![2] as List;
+
 
           if (currentUserData == null) {
             return Center(
